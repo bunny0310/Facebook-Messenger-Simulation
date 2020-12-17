@@ -1,0 +1,27 @@
+<mat-drawer-container class="example-container">
+    <mat-drawer mode="side" style = "width:25%" opened>
+        <div class = "header">
+                <mat-card style="width: 100%">
+                        <mat-card-subtitle>
+                            Welcome {{userEmail}}
+                            <button mat-button color="primary" (click) = "logout()" style="float: right">Logout</button> 
+                        </mat-card-subtitle>
+                </mat-card> 
+        </div>
+        <mat-divider></mat-divider>
+        <mat-selection-list [multiple]="false">
+            <mat-list-option *ngFor="let chat of chats" [value]="chat" (click) = "initializeChat(chat.cid, chat.user.firstName + ' '  + chat.user.lastName, chat.user.email)">
+                {{chat.user.firstName}}  {{chat.user.lastName}}
+            </mat-list-option>
+        </mat-selection-list>
+    </mat-drawer>
+    <mat-drawer-content>
+        <div class="chat-room" *ngIf="chatSelected">
+            <app-chat-window [cid] = currentChatId [chatName] = chatName [chatEmail] = chatEmail></app-chat-window>
+        </div>
+
+        <div class="wait-room nochats" *ngIf="!chatSelected">
+            <span class = "mat-display-1">No chat selected</span>
+        </div>
+    </mat-drawer-content>
+</mat-drawer-container>

@@ -1,0 +1,57 @@
+<div class="header" style="position: absolute">
+        <mat-card class="chat-title" style="position: fixed; width: 100%; z-index: 9999; background-color: #f2f2f2;">
+            <mat-card-title>{{chatName}}</mat-card-title>
+            <mat-card-subtitle *ngIf="userOnline || lastSeen < 1">
+                    <mat-icon style="color: #2eb82e">
+                        fiber_manual_record
+                    </mat-icon> Online
+            </mat-card-subtitle>
+            <mat-card-subtitle *ngIf="!userOnline && lastSeen > 0">
+                Active {{lastSeen}} {{lastSeenUnits}} ago
+            </mat-card-subtitle>
+        </mat-card>
+    </div>
+    <div class="wrapper" style="height: 100px;">
+    </div>
+    <div class="messages-window">
+        <mat-list>
+            <mat-list-item *ngFor = "let message of messages" style="margin-bottom: 40px;"> 
+                <!-- if the messages were sent on the same day -->
+                <div class="messagesOfTheDay" *ngIf="!isNewLineMessage(message)">
+                    <mat-card class="UserMessage" *ngIf="message.user['email'] === userEmail">
+                        <b>{{message.user['firstName']}}: </b> {{message.content['text']}}
+                        <div class="mat-caption">{{message.createdAt | date: 'shortTime'}}</div>
+                    </mat-card>
+                    <mat-card class="RecipientMessage" *ngIf="message.user['email'] !== userEmail" >
+                        <b>{{message.user['firstName']}}: </b> {{message.content['text']}}
+                        <br>
+                        <div class="mat-caption">{{message.createdAt | date: 'shortTime'}}</div>
+                    </mat-card>
+                </div>
+                <!-- if the messages are 2 or more days apart -->
+                <div class="divideBetweenDays" *ngIf = "isNewLineMessage(message)">
+                    <mat-divider></mat-divider>
+                    <span class="mat-caption" style="text-align: center; margin-left: auto; margin-right: auto">
+                        {{message.createdAt | date: 'longDate'}}
+                    </span>
+                </div>
+            </mat-list-item>
+        </mat-list>
+        <div class="mat-caption" *ngIf="hasSeen">Seen</div>
+    </div>
+    <div class="wrapper" style="height: 150px;">
+
+    </div>
+    <div class="message-box" style="position: absolute; background-color: #f2f2f2;">
+        <mat-card style="position: fixed; bottom: 0; width: 100%">
+            <form [formGroup]="messageForm">
+                <mat-form-field class = "full-form-field">
+                    <mat-label>Type a message: </mat-label>
+                    <input matInput type="text" placeholder = "Type a message" formControlName="message">
+                </mat-form-field>
+                <button mat-raised-button color="primary" (click) = "sendMessage(userEmail, cid)">
+                        Send
+                </button> 
+            </form>
+        </mat-card>
+    </div>

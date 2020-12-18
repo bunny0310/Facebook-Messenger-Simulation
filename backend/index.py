@@ -165,7 +165,8 @@ def updateChatTimestamp():
     if len(user) != 1:
         return make_response(jsonify({"message" : "user not found"}))
     
-    chat.progressUsers[str(user[0].uid)] = str(datetime.datetime.now())
+    print(data['type'])
+    chat.progressUsers[str(user[0].uid)] = ({'time': str(datetime.datetime.now()), 'type': data['type']})
     flag_modified(chat, "progressUsers")
     db.session.add(chat)
     print(chat.as_dict())

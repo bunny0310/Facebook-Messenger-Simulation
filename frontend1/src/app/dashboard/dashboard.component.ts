@@ -60,9 +60,9 @@ export class DashboardComponent implements OnInit {
     this.chatSelected = true;
 
     if (this.prevChat !== null) {
-      this.apiService.updateChatUserTimestamp(this.prevChat, this.userEmail);
+      this.apiService.updateChatUserTimestamp(this.prevChat, this.userEmail, 'out');
     }
-    this.apiService.updateChatUserTimestamp(cid, this.userEmail);
+    this.apiService.updateChatUserTimestamp(cid, this.userEmail, 'in');
 
     this.prevChat = cid;
   }

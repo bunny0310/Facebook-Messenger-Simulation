@@ -57,10 +57,11 @@ export class APIService {
     });
   }
 
-  updateChatUserTimestamp(cid: number, userEmail: string) {
+  updateChatUserTimestamp(cid: number, userEmail: string, type: string) {
     const data = {
       cid,
-      userEmail
+      userEmail,
+      type
     };
     this.http.post('http://localhost:5001/updateChatTimestamp', data)
     .subscribe((res) => {

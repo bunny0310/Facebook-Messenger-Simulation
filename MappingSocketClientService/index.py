@@ -91,14 +91,30 @@ def handle_lastseen(body):
         }
         r.set('lastSeenRequests', json.dumps(d))
     
+    if r.exists('currentChatsViewing'):
+        d = json.loads(r.get('currentChatsViewing'))
+        if (request.sid in d):
+            d[request.sid].append(body['cid'])
+        else:
+            d[request.sid] = [body['cid']]
+        r.set('currentChatsViewing', json.dumps(d))  
+
+    else:
+        d = {
+            request.sid : [body['cid']]
+        }
+        r.set('currentChatsViewing', json.dumps(d))    
+
+    req = requests.post('http://localhost:5000/updateChatTimestamp', json={"cid": body['cid'], "userEmail": body['recipientEmail'], "type": "in"})
+    print(req.json())
+   
     while(request.sid in json.loads(r.get('lastSeenRequests')) and body['recipientEmail'] in json.loads(r.get('lastSeenRequests'))[request.sid]):
         # print("This one should keep happening every second")
-        print("getting heartbeat for " + body['recipientEmail'])
         print(json.loads(r.get('heartbeats'))[body['recipientEmail']])
         emit('new-message', json.loads(r.get('heartbeats'))[body['recipientEmail']], json=True)
         req = requests.post('http://localhost:5000/getUserLastProgress', json={"cid": body['cid'], "email": body['recipientEmail']})
         emit('read-receipt', req.json(), json=True)
-        time.sleep(10)
+        time.sleep(2)
 
 @app.route('/sendMessage', methods = ['POST'])
 def sendMessage():
@@ -111,10 +127,12 @@ def sendMessage():
     message = data['message']
 
     req = requests.post('http://localhost:5000/sendMessage', json={"cid": data['cid'], "userEmail": data['email'], "message": data['message']})
-    sid1 = json.loads(r.get('sessions-sockets'))[email]
-    sid2 = json.loads(r.get('sessions-sockets'))[data['recipientEmail']]
-    socketio.emit('message', req.json(), room=sid1)
-    socketio.emit('message', req.json(), room=sid2)
+    client1_ids = json.loads(r.get('sessions-sockets'))[email]
+    client2_ids = json.loads(r.get('sessions-sockets'))[data['recipientEmail']]
+    for id in client1_ids:
+        socketio.emit('message', req.json(), room=id)
+    for id in client2_ids:
+        socketio.emit('message', req.json(), room=id)
 
     return make_response(jsonify({"message" : "success"}))
     
@@ -140,6 +158,17 @@ def test_disconnect():
     
     if(request.sid in json.loads(r.get('lastSeenRequests'))):
         d = json.loads(r.get('lastSeenRequests'))
+        print('removing last seen requests information from the cache')
+        print(d[request.sid])
+        if(request.sid in json.loads(r.get('currentChatsViewing'))):
+            d1 = json.loads(r.get('currentChatsViewing'))
+            print('removing current chat viewing requests information from the cache')
+            print(d[request.sid])
+            req = requests.post('http://localhost:5000/updateChatTimestamp', json={"cid": d1[request.sid][0], "userEmail": d[request.sid][0], "type": "out"})
+            print(req.json())
+            d1.pop(request.sid, None)
+            r.set('currentChatsViewing', json.dumps(d1))
+
         d.pop(request.sid, None)
         r.set('lastSeenRequests', json.dumps(d))
 
@@ -148,15 +177,24 @@ def closePreviousChatChannel(message):
     # print('channel being closed is ' + message)
     if(request.sid in json.loads(r.get('lastSeenRequests'))):
         d = json.loads(r.get('lastSeenRequests'))
-        print('previous chat .... ', d[request.sid])
+        if(request.sid in json.loads(r.get('currentChatsViewing'))):
+            d1 = json.loads(r.get('currentChatsViewing'))
+
+            req = requests.post('http://localhost:5000/updateChatTimestamp', json={"cid": d1[request.sid][0], "userEmail": d[request.sid][0], "type": "out"})
+            print(req.json())
+
+            d1[request.sid] = []
+            r.set('currentChatsViewing', json.dumps(d1))  
+
         d[request.sid] = []
         r.set('lastSeenRequests', json.dumps(d))   
+
 
 
 @app.route('/updateChatTimestamp', methods=['POST'])
 def updateChatTimestamp():
     data = request.get_json()
-    req = requests.post('http://localhost:5000/updateChatTimestamp', json={"cid": data['cid'], "userEmail": data['userEmail']})
+    req = requests.post('http://localhost:5000/updateChatTimestamp', json={"cid": data['cid'], "userEmail": data['userEmail'], "type": data['type']})
 
     return make_response(jsonify({"message" : req.json()}))
 

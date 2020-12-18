@@ -26,7 +26,7 @@ export class ChatWindowComponent implements OnInit, OnChanges{
   });
   hasSeen = false;
   userEmail = localStorage.getItem('user'); // to store the logged in user's email
-  recipientTimestamp;
+  recipientTimeObject;
 
   ngOnInit(): void {
   }
@@ -36,9 +36,10 @@ export class ChatWindowComponent implements OnInit, OnChanges{
     // receive any new messages
     this.socketService.getMessages('message').subscribe((res) => {
       this.messages.push(res);
-      const recipientDate = new Date(this.recipientTimestamp).getTime();
+      const recipientDate = new Date(this.recipientTimeObject.timestamp.time).getTime();
       const lastMessageDate = new Date(String(this.messages[this.messages.length - 1].createdAt)).getTime();
-      if (recipientDate >= lastMessageDate) {
+      console.log(this.recipientTimeObject);
+      if (recipientDate >= lastMessageDate || (this.recipientTimeObject.timestamp.type === 'in')) {
         this.hasSeen = true;
       } else {
         this.hasSeen = false;
@@ -77,9 +78,9 @@ export class ChatWindowComponent implements OnInit, OnChanges{
           this.messages.splice(i, 0, newLineMessage);
         }
       }
-      const recipientDate = new Date(this.recipientTimestamp).getTime();
+      const recipientDate = new Date(this.recipientTimeObject.timestamp.time).getTime();
       const lastMessageDate = new Date(String(this.messages[this.messages.length - 1].createdAt)).getTime();
-      if (recipientDate >= lastMessageDate) {
+      if (recipientDate >= lastMessageDate || (this.recipientTimeObject.timestamp.type === 'in')) {
         this.hasSeen = true;
       } else {
         this.hasSeen = false;
@@ -99,11 +100,12 @@ export class ChatWindowComponent implements OnInit, OnChanges{
     this.socketService.sendLSRequest(JSON.stringify(body));
 
     this.socketService.getMessages('read-receipt').subscribe(message => {
-      this.recipientTimestamp = message.timestamp;
+      this.recipientTimeObject = message;
+      console.log(this.recipientTimeObject);
       if (this.messages.length > 0) {
-        const recipientDate = new Date(this.recipientTimestamp).getTime();
+        const recipientDate = new Date(this.recipientTimeObject.timestamp.time).getTime();
         const lastMessageDate = new Date(String(this.messages[this.messages.length - 1].createdAt)).getTime();
-        if (recipientDate >= lastMessageDate) {
+        if (recipientDate >= lastMessageDate || (this.recipientTimeObject.timestamp.type === 'in')) {
           this.hasSeen = true;
         } else {
           this.hasSeen = false;

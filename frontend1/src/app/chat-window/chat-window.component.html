@@ -15,7 +15,7 @@
     </div>
     <div class="messages-window">
         <mat-list>
-            <mat-list-item *ngFor = "let message of messages" style="margin-bottom: 40px;"> 
+            <mat-list-item *ngFor = "let message of messages; index as i" style="margin-bottom: 40px;"> 
                 <!-- if the messages were sent on the same day -->
                 <div class="messagesOfTheDay" *ngIf="!isNewLineMessage(message)">
                     <mat-card class="UserMessage" *ngIf="message.user['email'] === userEmail">
@@ -27,6 +27,7 @@
                         <br>
                         <div class="mat-caption">{{message.createdAt | date: 'shortTime'}}</div>
                     </mat-card>
+                    <div class="mat-caption" *ngIf="hasSeen && i == messages.length - 1 && message.user['email'] === userEmail">Seen</div>
                 </div>
                 <!-- if the messages are 2 or more days apart -->
                 <div class="divideBetweenDays" *ngIf = "isNewLineMessage(message)">
@@ -37,7 +38,6 @@
                 </div>
             </mat-list-item>
         </mat-list>
-        <div class="mat-caption" *ngIf="hasSeen">Seen</div>
     </div>
     <div class="wrapper" style="height: 150px;">
 
